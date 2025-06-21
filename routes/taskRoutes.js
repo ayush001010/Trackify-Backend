@@ -1,13 +1,20 @@
 import express from "express";
 import Task from "../models/Task.js";
+import authMiddleware from "../Middleware/authMiddleware.js";
 const route = express.Router();
 
 // To add task
-route.post("/task", async (req, res) => {
+route.post("/task", authMiddleware, async (req, res) => {
   try {
     const { title, description, completed, createdAt } = req.body;
-
-    const newTask = new Task({ title, description, completed, createdAt }); // insert() ..?
+    
+    const newTask = new Task({
+      title,
+      description,
+      completed,
+      createdAt,
+      user: req.user.userId,
+    }); // insert() ..?
     await newTask.save();
     res.status(201).json({
       success: true,
@@ -23,9 +30,11 @@ route.post("/task", async (req, res) => {
 });
 
 // To get all tasks
-route.get("/tasks", async (req, res) => {
+route.get("/tasks", authMiddleware, async (req, res) => {
   try {
-    const allTask = await Task.find().sort({ createdAt: -1 }); // find()
+    const allTask = await Task.find({ user: req.user.userId }).sort({
+      createdAt: -1,
+    }); // find()
 
     res.status(200).json({
       success: true,
@@ -42,11 +51,12 @@ route.get("/tasks", async (req, res) => {
 });
 
 // To get single task
-route.get("/tasks/:id", async (req, res) => {
+route.get("/tasks/:id", authMiddleware, async (req, res) => {
   try {
-    const taskId = req.params.id;
-
-    const task = await Task.findById(taskId); // findById()
+    const task = await Task.findOne({
+      _id: req.params.id,
+      user: req.user.userId,
+    }); // findById() ---> findOne()
     if (!task) {
       return res.status(404).json({
         success: false,
@@ -68,16 +78,15 @@ route.get("/tasks/:id", async (req, res) => {
 });
 
 // Update a task by ID
-route.put("/tasks/:id", async (req, res) => {
+route.put("/tasks/:id", authMiddleware, async (req, res) => {
   try {
-    const taskId = req.params.id; //from url
     const updateData = req.body;
 
-    const updatedTask = await Task.findByIdAndUpdate(taskId, updateData, {
-      // findBIdAndUpdate
-      new: true, // returns the updated document
-      runValidators: true, // optional: ensure schema validation
-    });
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.userId },
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     if (!updatedTask) {
       return res.status(404).json({
@@ -101,10 +110,14 @@ route.put("/tasks/:id", async (req, res) => {
 });
 
 // Delete the task
-route.delete("/tasks/:id", async (req, res) => {
+route.delete("/tasks/:id", authMiddleware, async (req, res) => {
   try {
-    const taskId = req.params.id;
-    const taskToDelete = await Task.findByIdAndDelete(taskId);
+    // const taskId = req.params.id;
+    // const taskToDelete = await Task.findByIdAndDelete(taskId);
+     const taskToDelete = await Task.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.userId,
+    });
     if (!taskToDelete) {
       return res.status(404).json({
         success: false,
