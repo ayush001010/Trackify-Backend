@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import authMiddleware from "../Middleware/authMiddleware.js";
 
 const authRoute = express.Router();
 
@@ -71,7 +72,6 @@ authRoute.post("/login", async (req, res) => {
         email: user.email,
       },
     });
-
   } catch (error) {
     console.error("Error while creating task:", error.message);
     res.status(400).json({
@@ -80,5 +80,20 @@ authRoute.post("/login", async (req, res) => {
     });
   }
 });
+
+// ACCOUNT
+authRoute.get("/account", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-password");
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch user data" });
+  }
+});
+
+
+
 
 export default authRoute;
