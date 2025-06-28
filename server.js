@@ -24,6 +24,11 @@ mongoose
 app.use("/api", authRoute);     // ➤ Handles /api/register, /api/login
 app.use("/api", taskRoute);     // ➤ Handles /api/task, /api/tasks, etc.
 
+//Render
+app.get('/', (req, res) => {
+  res.send('❤️❤️Taskify-Backend❤️❤️');
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);
