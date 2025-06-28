@@ -12,7 +12,8 @@ const userSchema = mongooes.Schema({
     password: {
         type: String,
         require: true
-    }
+    },
+
 })
 
 const User = mongooes.model("User", userSchema);
